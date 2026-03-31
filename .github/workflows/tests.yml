@@ -86,3 +86,18 @@ jobs:
 
       - name: Run Tests
         run: vendor/bin/pest --no-coverage
+
+  tests-status:
+    if: ${{ !contains(github.event.head_commit.message, 'skip ci') && always() }}
+    name: Tests
+    needs: tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Fail when matrix failed
+        if: ${{ needs.tests.result != 'success' }}
+        run: exit 1
+
+      - name: Confirm matrix success
+        if: ${{ needs.tests.result == 'success' }}
+        run: echo "All test matrix jobs passed"
