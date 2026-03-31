@@ -20,7 +20,7 @@ it('builds MAX message query and body payloads', function () {
 
     expect($message->toQuery())->toBe([
         'user_id' => 12345,
-        'disable_link_preview' => true,
+        'disable_link_preview' => false,
     ])->and($message->toBody())->toBe([
         'format' => 'markdown',
         'notify' => false,

@@ -11,6 +11,7 @@ use NotificationChannels\Max\Containers\MessengerSection\Channel\Tasks\ResolveRe
 use NotificationChannels\Max\MaxMessage;
 use NotificationChannels\Max\Ship\Exceptions\CouldNotSendNotification;
 use NotificationChannels\Max\Ship\Http\MaxTransport;
+use Throwable;
 
 final class SendMaxNotificationAction
 {
@@ -22,7 +23,7 @@ final class SendMaxNotificationAction
     /**
      * @return array<string, mixed>|null
      *
-     * @throws CouldNotSendNotification
+     * @throws Throwable
      */
     public function run(mixed $notifiable, Notification $notification): ?array
     {
@@ -30,40 +31,45 @@ final class SendMaxNotificationAction
             return null;
         }
 
-        $message = $notification->toMax($notifiable);
-
-        if (is_string($message)) {
-            $message = MaxMessage::create($message);
-        }
-
-        if (! $message instanceof MaxMessage) {
-            throw CouldNotSendNotification::invalidMessage();
-        }
-
-        if (! $message->canSend()) {
-            return null;
-        }
-
-        $recipient = $this->resolveRecipientTask->run($message, $notifiable, $notification);
-
-        if (isset($recipient['user_id'])) {
-            $message->toUser($recipient['user_id']);
-        }
-
-        if (isset($recipient['chat_id'])) {
-            $message->toChat($recipient['chat_id']);
-        }
+        $message = null;
+        $recipient = [];
 
         try {
+            $message = $notification->toMax($notifiable);
+
+            if (is_string($message)) {
+                $message = MaxMessage::create($message);
+            }
+
+            if (! $message instanceof MaxMessage) {
+                throw CouldNotSendNotification::invalidMessage();
+            }
+
+            if (! $message->canSend()) {
+                return null;
+            }
+
+            $recipient = $this->resolveRecipientTask->run($message, $notifiable, $notification);
+
+            if (isset($recipient['user_id'])) {
+                $message->toUser($recipient['user_id']);
+            }
+
+            if (isset($recipient['chat_id'])) {
+                $message->toChat($recipient['chat_id']);
+            }
+
             $response = $message->clientWithOverrides()->sendMessage($message);
-        } catch (CouldNotSendNotification $exception) {
+        } catch (Throwable $exception) {
             $data = [
                 'to' => $recipient,
-                'request' => $message->toArray(),
                 'exception' => $exception,
             ];
 
-            $message->exceptionHandler?->__invoke($data);
+            if ($message instanceof MaxMessage) {
+                $data['request'] = $message->toArray();
+                $message->exceptionHandler?->__invoke($data);
+            }
 
             $this->dispatcher->dispatch(
                 new NotificationFailed($notifiable, $notification, 'max', $data)

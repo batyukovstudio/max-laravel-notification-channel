@@ -7,12 +7,14 @@ namespace NotificationChannels\Max\Tests\Feature;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Notifications\Events\NotificationFailed;
 use Illuminate\Notifications\Notification;
+use InvalidArgumentException;
 use NotificationChannels\Max\MaxMessage;
 use NotificationChannels\Max\Ship\Exceptions\CouldNotSendNotification;
 use NotificationChannels\Max\Tests\TestSupport\TestNotifiable;
 use NotificationChannels\Max\Tests\TestSupport\TestNotification;
 use NotificationChannels\Max\Tests\TestSupport\TestNotificationNoRecipient;
 use NotificationChannels\Max\Tests\TestSupport\TestStringNotification;
+use RuntimeException;
 
 it('can send a MAX message', function () {
     $notifiable = new TestNotifiable;
@@ -47,6 +49,83 @@ it('dispatches NotificationFailed when MAX delivery fails', function () {
 
     $this->channel->send($notifiable, $notification);
 })->throws(CouldNotSendNotification::class);
+
+it('dispatches NotificationFailed for unexpected exceptions during MAX message preparation', function () {
+    $notifiable = new TestNotifiable;
+    $notification = new class extends Notification
+    {
+        public function toMax($notifiable): MaxMessage
+        {
+            return MaxMessage::create()->view('MissingView');
+        }
+    };
+
+    $this->dispatcher
+        ->expects($this->once())
+        ->method('dispatch')
+        ->with($this->callback(function (NotificationFailed $event) use ($notifiable, $notification): bool {
+            return $event->channel === 'max'
+                && $event->notifiable === $notifiable
+                && $event->notification === $notification
+                && $event->data['to'] === []
+                && $event->data['exception'] instanceof InvalidArgumentException
+                && ! array_key_exists('request', $event->data);
+        }));
+
+    $this->channel->send($notifiable, $notification);
+})->throws(InvalidArgumentException::class);
+
+it('invokes onError for unexpected MAX delivery exceptions', function () {
+    $notifiable = new TestNotifiable(maxUserId: 12345);
+    $exception = new RuntimeException('serializer crashed');
+    $capturedError = null;
+    $handler = function (array $data) use (&$capturedError): void {
+        $capturedError = $data;
+    };
+
+    $notification = new class($handler) extends Notification
+    {
+        public function __construct(private $handler) {}
+
+        public function toMax($notifiable): MaxMessage
+        {
+            return MaxMessage::create('Unexpected failure')->onError($this->handler);
+        }
+    };
+
+    $this->client
+        ->shouldReceive('sendMessage')
+        ->once()
+        ->andThrow($exception);
+
+    $this->dispatcher
+        ->expects($this->once())
+        ->method('dispatch')
+        ->with($this->callback(function (NotificationFailed $event) use ($notifiable, $notification, $exception): bool {
+            return $event->channel === 'max'
+                && $event->notifiable === $notifiable
+                && $event->notification === $notification
+                && $event->data['to'] === ['user_id' => 12345]
+                && $event->data['request'] === [
+                    'query' => ['user_id' => 12345],
+                    'body' => ['text' => 'Unexpected failure'],
+                ]
+                && $event->data['exception'] === $exception;
+        }));
+
+    try {
+        $this->channel->send($notifiable, $notification);
+    } finally {
+        expect($capturedError)->toMatchArray([
+            'to' => ['user_id' => 12345],
+            'request' => [
+                'query' => ['user_id' => 12345],
+                'body' => ['text' => 'Unexpected failure'],
+            ],
+            'exception' => $exception,
+        ]);
+    }
+})->throws(RuntimeException::class, 'serializer crashed');
 
 it('returns null when notification does not define toMax', function () {
     $result = $this->channel->send(new TestNotifiable, new class extends Notification {});

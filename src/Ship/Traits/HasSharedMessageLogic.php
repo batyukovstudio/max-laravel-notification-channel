@@ -42,7 +42,8 @@ trait HasSharedMessageLogic
 
     public function disableLinkPreview(bool $disable = true): static
     {
-        $this->query['disable_link_preview'] = $disable;
+        // MAX disables preview when the flag is explicitly false.
+        $this->query['disable_link_preview'] = ! $disable;
 
         return $this;
     }
