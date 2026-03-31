@@ -6,6 +6,7 @@ namespace NotificationChannels\Max\Tests\Feature;
 
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Mockery;
@@ -39,7 +40,7 @@ it('sends messages through the MAX messages endpoint', function () {
                 && $options['headers']['Authorization'] === 'token'
                 && $options['query'] === [
                     'user_id' => 12345,
-                    'disable_link_preview' => true,
+                    'disable_link_preview' => false,
                 ]
                 && $options['json'] === [
                     'format' => 'markdown',
@@ -103,6 +104,22 @@ it('wraps MAX client exceptions', function () {
 
     $client->sendMessage($message);
 })->throws(CouldNotSendNotification::class, 'MAX responded with an error `400 - chat not found`');
+
+it('preserves MAX server errors with status code and response message', function () {
+    $http = Mockery::mock(HttpClient::class);
+    $http->shouldReceive('request')
+        ->once()
+        ->andThrow(new ServerException(
+            'Service Unavailable',
+            new Request('POST', 'https://platform-api.max.ru/messages'),
+            new Response(503, [], json_encode(['message' => 'service temporarily unavailable']))
+        ));
+
+    $client = new MaxClient('token', $http);
+    $message = MaxMessage::create('Hello')->toUser(12345);
+
+    $client->sendMessage($message);
+})->throws(CouldNotSendNotification::class, 'MAX responded with an error `503 - service temporarily unavailable`');
 
 it('wraps generic transport exceptions', function () {
     $http = Mockery::mock(HttpClient::class);

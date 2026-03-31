@@ -47,6 +47,9 @@ final class MaxUpdates extends MaxBase
         return $this;
     }
 
+    /**
+     * @param  array<string, mixed>  $options
+     */
     public function options(array $options): self
     {
         $this->options = [...$this->options, ...$options];

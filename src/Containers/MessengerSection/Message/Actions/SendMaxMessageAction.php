@@ -17,7 +17,7 @@ final class SendMaxMessageAction
         private readonly BuildMessageBodyTask $buildMessageBodyTask
     ) {}
 
-    public function run(MaxMessage $message, MaxClient $client): ?ResponseInterface
+    public function run(MaxMessage $message, MaxClient $client): ResponseInterface
     {
         return $client->transport()->request(
             'POST',

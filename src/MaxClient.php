@@ -88,6 +88,9 @@ class MaxClient
         return $this->transport->request('GET', "/messages/{$messageId}");
     }
 
+    /**
+     * @param  array<string, mixed>  $options
+     */
     public function getUpdates(array $options = []): ?ResponseInterface
     {
         return $this->transport->request('GET', '/updates', $options);
@@ -98,6 +101,9 @@ class MaxClient
         return $this->transport->request('GET', '/subscriptions');
     }
 
+    /**
+     * @param  array<string, mixed>  $payload
+     */
     public function subscribe(array $payload): ?ResponseInterface
     {
         return $this->transport->request('POST', '/subscriptions', [], $payload);
@@ -110,6 +116,9 @@ class MaxClient
         ]);
     }
 
+    /**
+     * @param  array<string, mixed>  $payload
+     */
     public function answerCallback(string $callbackId, array $payload): ?ResponseInterface
     {
         return $this->transport->request('POST', '/answers', [

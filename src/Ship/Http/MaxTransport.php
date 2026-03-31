@@ -6,7 +6,7 @@ namespace NotificationChannels\Max\Ship\Http;
 
 use Exception;
 use GuzzleHttp\Client as HttpClient;
-use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Utils;
 use NotificationChannels\Max\Ship\Exceptions\CouldNotSendNotification;
 use Psr\Http\Message\ResponseInterface;
@@ -75,7 +75,7 @@ final class MaxTransport
         string $uri,
         array $query = [],
         array $json = []
-    ): ?ResponseInterface {
+    ): ResponseInterface {
         $options = $this->defaultOptions();
 
         if ($query !== []) {
@@ -88,9 +88,9 @@ final class MaxTransport
 
         try {
             return $this->http->request($method, $this->normalizeUri($uri), $options);
-        } catch (ClientException $exception) {
+        } catch (BadResponseException $exception) {
             throw CouldNotSendNotification::maxRespondedWithAnError(
-                $exception->getResponse()?->getStatusCode() ?? 0,
+                $exception->getResponse()->getStatusCode(),
                 $this->resolveErrorMessage($exception),
                 $exception
             );
@@ -102,7 +102,7 @@ final class MaxTransport
     /**
      * @throws CouldNotSendNotification
      */
-    public function upload(string $uri, string $filePath): ?ResponseInterface
+    public function upload(string $uri, string $filePath): ResponseInterface
     {
         if (! is_file($filePath)) {
             throw CouldNotSendNotification::invalidFile($filePath);
@@ -123,9 +123,9 @@ final class MaxTransport
 
         try {
             return $this->http->request('POST', $this->normalizeUri($uri), $options);
-        } catch (ClientException $exception) {
+        } catch (BadResponseException $exception) {
             throw CouldNotSendNotification::maxRespondedWithAnError(
-                $exception->getResponse()?->getStatusCode() ?? 0,
+                $exception->getResponse()->getStatusCode(),
                 $this->resolveErrorMessage($exception),
                 $exception
             );
@@ -183,12 +183,8 @@ final class MaxTransport
         return $this->baseUri.'/'.ltrim($uri, '/');
     }
 
-    private function resolveErrorMessage(ClientException $exception): string
+    private function resolveErrorMessage(BadResponseException $exception): string
     {
-        if (! $exception->hasResponse()) {
-            return 'MAX responded with an error but no response body found';
-        }
-
         $body = (string) $exception->getResponse()->getBody();
         $decoded = json_decode($body, true);
 
