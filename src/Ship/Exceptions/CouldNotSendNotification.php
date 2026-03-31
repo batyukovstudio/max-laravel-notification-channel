@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace NotificationChannels\Max\Ship\Exceptions;
 
 use Exception;
+use NotificationChannels\Max\MaxMessage;
 use Throwable;
 
 final class CouldNotSendNotification extends Exception
@@ -38,7 +39,7 @@ final class CouldNotSendNotification extends Exception
     public static function invalidMessage(): self
     {
         return new self(
-            'The toMax() method must return a string or an instance of '.\NotificationChannels\Max\MaxMessage::class
+            'The toMax() method must return a string or an instance of '.MaxMessage::class
         );
     }
 

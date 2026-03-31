@@ -170,8 +170,7 @@ trait HasSharedMessageLogic
         ?string $webApp = null,
         ?int $contactId = null,
         int $columns = 2
-    ): static
-    {
+    ): static {
         $button = [
             'type' => 'open_app',
             'text' => $text,

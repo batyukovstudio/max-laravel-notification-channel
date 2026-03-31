@@ -14,6 +14,7 @@ use Psr\Http\Message\ResponseInterface;
 final class SendMaxMessageAction
 {
     private const INITIAL_ATTACHMENT_DELAY_US = 100000;
+
     /** @var list<int> */
     private const ATTACHMENT_READY_RETRY_DELAYS_US = [200000, 400000, 800000];
 
