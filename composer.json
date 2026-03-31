@@ -1,23 +1,27 @@
 {
-    "name": "laravel-notification-channels/telegram",
-    "description": "Telegram Notifications Channel for Laravel",
+    "name": "batyukovstudio/max-laravel-notification-channel",
+    "description": "MAX Notifications Channel for Laravel",
     "license": "MIT",
     "keywords": [
-        "telegram notification",
+        "max notification",
         "laravel",
-        "telegram",
+        "max",
+        "messenger",
         "notification",
-        "telegram notifications channel"
+        "max notifications channel"
     ],
     "authors": [
         {
-            "name": "Irfaq Syed",
-            "email": "github@lukonet.net",
-            "homepage": "https://lukonet.com",
-            "role": "Developer"
+            "name": "ООО «Студия Батюкова»",
+            "homepage": "https://www.batyukovstudio.com/",
+            "role": "Maintainer"
         }
     ],
-    "homepage": "https://github.com/laravel-notification-channels/telegram",
+    "homepage": "https://github.com/batyukovstudio/max-laravel-notification-channel",
+    "support": {
+        "issues": "https://github.com/batyukovstudio/max-laravel-notification-channel/issues",
+        "source": "https://github.com/batyukovstudio/max-laravel-notification-channel"
+    },
     "require": {
         "php": "^8.3",
         "ext-json": "*",
@@ -40,12 +44,12 @@
     "prefer-stable": true,
     "autoload": {
         "psr-4": {
-            "NotificationChannels\\Telegram\\": "src"
+            "NotificationChannels\\Max\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "NotificationChannels\\Telegram\\Tests\\": "tests"
+            "NotificationChannels\\Max\\Tests\\": "tests"
         }
     },
     "config": {
@@ -58,7 +62,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "NotificationChannels\\Telegram\\TelegramServiceProvider"
+                "NotificationChannels\\Max\\MaxServiceProvider"
             ]
         }
     },

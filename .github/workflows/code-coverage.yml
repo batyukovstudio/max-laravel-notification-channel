@@ -2,12 +2,12 @@ name: Unit test coverage
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
 
 jobs:
   coverage:
-    if: (github.repository == 'laravel-notification-channels/telegram') && !contains(github.event.head_commit.message, 'skip ci')
+    if: (github.repository == 'batyukovstudio/max-laravel-notification-channel') && !contains(github.event.head_commit.message, 'skip ci')
     runs-on: ubuntu-latest
 
     env:

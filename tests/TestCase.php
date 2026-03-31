@@ -1,105 +1,65 @@
 <?php
 
-namespace NotificationChannels\Telegram\Tests;
+declare(strict_types=1);
+
+namespace NotificationChannels\Max\Tests;
 
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Notifications\Notification;
 use Mockery;
-use NotificationChannels\Telegram\Telegram;
-use NotificationChannels\Telegram\TelegramChannel;
-use NotificationChannels\Telegram\TelegramServiceProvider;
+use NotificationChannels\Max\MaxChannel;
+use NotificationChannels\Max\MaxClient;
+use NotificationChannels\Max\MaxMessage;
+use NotificationChannels\Max\MaxServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 class TestCase extends Orchestra
 {
-    protected Telegram $telegram;
+    protected MaxClient $client;
 
-    protected mixed $dispatcher;
+    protected Dispatcher $dispatcher;
 
-    protected TelegramChannel $channel;
+    protected MaxChannel $channel;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->app->singleton(Telegram::class, function () {
-            return Mockery::mock(Telegram::class);
+        $this->app['view']->addLocation(__DIR__.'/TestSupport');
+
+        $this->app->singleton(MaxClient::class, function () {
+            return Mockery::mock(MaxClient::class);
         });
 
-        $this->telegram = app(Telegram::class);
-
+        $this->client = app(MaxClient::class);
         $this->dispatcher = $this->createMock(Dispatcher::class);
-        $this->channel = new TelegramChannel($this->dispatcher);
+        $this->channel = new MaxChannel($this->dispatcher);
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     protected function sendMockNotification(
-        string $shouldReceive,
         mixed $notifiable,
         Notification $notification,
         array $expectedResponse
-    ) {
-        $this->telegram
-            ->shouldReceive($shouldReceive)
-            ->with($notification->toTelegram($notifiable)->toArray())
+    ): ?array {
+        $this->client
+            ->shouldReceive('sendMessage')
             ->once()
-            ->andReturns(new Response(200, [], json_encode($expectedResponse)));
+            ->withArgs(function (MaxMessage $message) use ($notification, $notifiable): bool {
+                return $message->toArray() === $notification->toMax($notifiable)->toArray();
+            })
+            ->andReturn(new Response(200, [], json_encode($expectedResponse)));
 
         return $this->channel->send($notifiable, $notification);
-    }
-
-    protected function sendFileMockNotification(
-        mixed $notifiable,
-        Notification $notification,
-        array $expectedResponse
-    ) {
-
-        $telegramFile = $notification->toTelegram($notifiable);
-        $this->telegram
-            ->shouldReceive('sendFile')
-            ->with(
-                $telegramFile->toArray(),
-                $telegramFile->type->value,
-                $telegramFile->hasFile()
-            )
-            ->once()
-            ->andReturns(new Response(200, [], json_encode($expectedResponse)));
-
-        return $this->channel->send($notifiable, $notification);
-    }
-
-    protected function makeMockResponse(array $result)
-    {
-        $payload = [
-            'ok' => true,
-            'result' => [
-                'message_id' => 9090,
-                'from' => [
-                    'id' => 12345678,
-                    'is_bot' => true,
-                    'first_name' => 'MyBot',
-                    'username' => 'MyBot',
-                ],
-                'chat' => [
-                    'id' => 90909090,
-                    'first_name' => 'John',
-                    'last_name' => 'Doe',
-                    'username' => 'testuser',
-                    'type' => 'private',
-                ],
-                'date' => 1600000000,
-            ],
-        ];
-
-        $payload['result'] = array_merge($payload['result'], $result);
-
-        return $payload;
     }
 
     protected function getPackageProviders($app): array
     {
         return [
-            TelegramServiceProvider::class,
+            MaxServiceProvider::class,
         ];
     }
 }

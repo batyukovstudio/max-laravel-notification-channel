@@ -1,5 +1,5 @@
 <?php
 
-use NotificationChannels\Telegram\Tests\TestCase;
+use NotificationChannels\Max\Tests\TestCase;
 
 uses(TestCase::class)->in(__DIR__);

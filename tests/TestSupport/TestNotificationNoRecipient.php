@@ -7,10 +7,10 @@ namespace NotificationChannels\Max\Tests\TestSupport;
 use Illuminate\Notifications\Notification;
 use NotificationChannels\Max\MaxMessage;
 
-final class TestNotification extends Notification
+final class TestNotificationNoRecipient extends Notification
 {
     public function toMax($notifiable): MaxMessage
     {
-        return MaxMessage::create('MAX notifications are production-ready.')->toUser(12345);
+        return MaxMessage::create('MAX notifications are production-ready.');
     }
 }

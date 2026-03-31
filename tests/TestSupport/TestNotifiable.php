@@ -1,18 +1,28 @@
 <?php
 
-namespace NotificationChannels\Telegram\Tests\TestSupport;
+declare(strict_types=1);
 
-use Illuminate\Notifications\Notifiable;
+namespace NotificationChannels\Max\Tests\TestSupport;
 
-/**
- * Class TestNotifiable.
- */
-class TestNotifiable
+use Illuminate\Notifications\Notification;
+
+final class TestNotifiable
 {
-    use Notifiable;
+    public function __construct(
+        public int|string|null $maxUserId = 67890,
+        public int|string|null $maxChatId = null
+    ) {}
 
-    public function routeNotificationForTelegram(): bool
+    public function routeNotificationFor(string $driver, Notification $notification): mixed
     {
-        return false;
+        if ($driver !== 'max') {
+            return null;
+        }
+
+        if ($this->maxChatId !== null) {
+            return ['chat_id' => $this->maxChatId];
+        }
+
+        return $this->maxUserId;
     }
 }

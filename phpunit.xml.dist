@@ -13,18 +13,10 @@
     failOnEmptyTestSuite="true"
 >
     <testsuites>
-        <testsuite name="Telegram Notification Channel Test Suite">
+        <testsuite name="MAX Notification Channel Test Suite">
             <directory>tests</directory>
         </testsuite>
     </testsuites>
-
-    <coverage>
-        <report>
-            <html outputDirectory="build/coverage"/>
-            <text outputFile="build/coverage.txt"/>
-            <clover outputFile="build/pest.xml"/>
-        </report>
-    </coverage>
 
     <logging>
         <junit outputFile="build/report.junit.xml"/>
