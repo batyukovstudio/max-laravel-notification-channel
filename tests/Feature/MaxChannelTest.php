@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace NotificationChannels\Max\Tests\Feature;
 
+use GuzzleHttp\Psr7\Response;
 use Illuminate\Notifications\Events\NotificationFailed;
 use Illuminate\Notifications\Notification;
 use NotificationChannels\Max\MaxMessage;
@@ -75,7 +76,7 @@ it('supports string-based notifications and resolves routed recipients', functio
             return $message->toQuery() === ['user_id' => 67890]
                 && $message->toBody() === ['text' => 'String-based MAX notification'];
         })
-        ->andReturn(new \GuzzleHttp\Psr7\Response(200, [], json_encode([
+        ->andReturn(new Response(200, [], json_encode([
             'message' => ['body' => ['mid' => 'message-2']],
         ])));
 
@@ -96,7 +97,7 @@ it('resolves chat recipients from routeNotificationForMax', function () {
             return $message->toQuery() === ['chat_id' => -100500]
                 && $message->toBody() === ['text' => 'MAX notifications are production-ready.'];
         })
-        ->andReturn(new \GuzzleHttp\Psr7\Response(200, [], json_encode([
+        ->andReturn(new Response(200, [], json_encode([
             'message' => ['body' => ['mid' => 'message-3']],
         ])));
 

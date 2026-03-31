@@ -16,9 +16,6 @@ final class MaxMessage extends MaxBase implements MaxSenderContract
 
     private ?string $text = null;
 
-    /**
-     * @param  MaxClient|null  $client
-     */
     public function __construct(?string $content = null, ?MaxClient $client = null)
     {
         parent::__construct($client ?? app(MaxClient::class));
