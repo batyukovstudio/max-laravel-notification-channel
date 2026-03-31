@@ -6,7 +6,14 @@
 composer require batyukovstudio/max-laravel-notification-channel
 ```
 
-Добавьте токен бота в `config/services.php`:
+Добавьте переменные в `.env`:
+
+```dotenv
+MAX_BOT_TOKEN=your-max-bot-token
+MAX_API_BASE_URI=https://platform-api.max.ru
+```
+
+После этого опишите конфигурацию в `config/services.php`:
 
 ```php
 'max' => [
@@ -14,6 +21,8 @@ composer require batyukovstudio/max-laravel-notification-channel
     'base_uri' => env('MAX_API_BASE_URI', 'https://platform-api.max.ru'),
 ],
 ```
+
+Пакет читает настройки из конфигурации приложения через `config('services.max.*')`, а не напрямую из `.env`. Такой подход корректно работает с `php artisan config:cache`, потому что вызовы `env()` остаются только внутри конфигурационных файлов Laravel.
 
 ## Использование
 
