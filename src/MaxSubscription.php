@@ -51,6 +51,9 @@ final class MaxSubscription extends MaxBase
         return $this;
     }
 
+    /**
+     * @param  array<string, mixed>  $payload
+     */
     public function payload(array $payload): self
     {
         $this->payload = [...$this->payload, ...$payload];
@@ -79,9 +82,10 @@ final class MaxSubscription extends MaxBase
      */
     public function unsubscribe(?string $url = null): array
     {
-        $targetUrl = $url ?? ($this->payload['url'] ?? '');
+        $storedUrl = $this->payload['url'] ?? null;
+        $targetUrl = $url ?? (is_string($storedUrl) ? $storedUrl : '');
 
-        return app(DeleteSubscriptionAction::class)->run($this->clientWithOverrides(), (string) $targetUrl);
+        return app(DeleteSubscriptionAction::class)->run($this->clientWithOverrides(), $targetUrl);
     }
 
     /**

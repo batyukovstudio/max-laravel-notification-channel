@@ -75,7 +75,7 @@ final class MaxTransport
         string $uri,
         array $query = [],
         array $json = []
-    ): ?ResponseInterface {
+    ): ResponseInterface {
         $options = $this->defaultOptions();
 
         if ($query !== []) {
@@ -102,7 +102,7 @@ final class MaxTransport
     /**
      * @throws CouldNotSendNotification
      */
-    public function upload(string $uri, string $filePath): ?ResponseInterface
+    public function upload(string $uri, string $filePath): ResponseInterface
     {
         if (! is_file($filePath)) {
             throw CouldNotSendNotification::invalidFile($filePath);

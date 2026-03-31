@@ -19,10 +19,19 @@ final class ResolveRecipientTask
     public function run(MaxMessage $message, mixed $notifiable, Notification $notification): array
     {
         if ($message->hasRecipient()) {
-            return array_filter([
-                'user_id' => $message->getQueryValue('user_id'),
-                'chat_id' => $message->getQueryValue('chat_id'),
-            ], static fn (mixed $value): bool => $value !== null);
+            $recipient = [];
+            $userId = $message->getQueryValue('user_id');
+            $chatId = $message->getQueryValue('chat_id');
+
+            if (is_int($userId) || is_string($userId)) {
+                $recipient['user_id'] = $userId;
+            }
+
+            if (is_int($chatId) || is_string($chatId)) {
+                $recipient['chat_id'] = $chatId;
+            }
+
+            return $recipient;
         }
 
         if (! is_object($notifiable) || ! method_exists($notifiable, 'routeNotificationFor')) {

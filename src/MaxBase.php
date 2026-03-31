@@ -82,8 +82,10 @@ abstract class MaxBase implements JsonSerializable
 
     public function clientWithOverrides(): MaxClient
     {
-        return $this->hasToken()
-            ? $this->client->withToken($this->token)
+        $token = $this->token;
+
+        return $token !== null
+            ? $this->client->withToken($token)
             : $this->client;
     }
 }

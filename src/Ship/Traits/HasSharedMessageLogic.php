@@ -48,6 +48,9 @@ trait HasSharedMessageLogic
         return $this;
     }
 
+    /**
+     * @param  array<string, mixed>  $options
+     */
     public function queryOptions(array $options): static
     {
         $this->query = [...$this->query, ...$options];
@@ -55,6 +58,9 @@ trait HasSharedMessageLogic
         return $this;
     }
 
+    /**
+     * @param  array<string, mixed>  $options
+     */
     public function bodyOptions(array $options): static
     {
         $this->body = [...$this->body, ...$options];
@@ -103,7 +109,7 @@ trait HasSharedMessageLogic
      */
     public function attachment(array $attachment): static
     {
-        $attachments = $this->body['attachments'] ?? [];
+        $attachments = $this->attachmentsSnapshot();
         $attachments[] = $attachment;
         $this->body['attachments'] = $attachments;
         $this->attachmentsDefined = true;
@@ -233,9 +239,13 @@ trait HasSharedMessageLogic
         return $body;
     }
 
+    /**
+     * @param  array<string, mixed>  $button
+     */
     private function appendButton(array $button, int $columns): static
     {
         $columns = max(1, $columns);
+        /** @var list<array<string, mixed>> $flattened */
         $flattened = [];
 
         foreach ($this->buttonRows as $row) {
@@ -251,7 +261,7 @@ trait HasSharedMessageLogic
     private function syncInlineKeyboardAttachment(): static
     {
         $attachments = array_values(array_filter(
-            $this->body['attachments'] ?? [],
+            $this->attachmentsSnapshot(),
             static fn (array $attachment): bool => ($attachment['type'] ?? null) !== 'inline_keyboard'
         ));
 
@@ -268,5 +278,29 @@ trait HasSharedMessageLogic
         $this->attachmentsDefined = true;
 
         return $this;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function attachmentsSnapshot(): array
+    {
+        $attachments = $this->body['attachments'] ?? null;
+
+        if (! is_array($attachments)) {
+            return [];
+        }
+
+        /** @var list<array<string, mixed>> $normalized */
+        $normalized = [];
+
+        foreach ($attachments as $attachment) {
+            if (is_array($attachment)) {
+                /** @var array<string, mixed> $attachment */
+                $normalized[] = $attachment;
+            }
+        }
+
+        return $normalized;
     }
 }
