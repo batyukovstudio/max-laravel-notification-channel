@@ -127,6 +127,54 @@ it('invokes onError for unexpected MAX delivery exceptions', function () {
     }
 })->throws(RuntimeException::class, 'serializer crashed');
 
+it('invokes onError for unexpected MAX message preparation exceptions', function () {
+    $notifiable = new TestNotifiable;
+    $capturedError = null;
+    $handler = function (array $data) use (&$capturedError): void {
+        $capturedError = $data;
+    };
+
+    $notification = new class($handler) extends Notification
+    {
+        public function __construct(private $handler) {}
+
+        public function toMax($notifiable): MaxMessage
+        {
+            return MaxMessage::create('Unexpected failure')
+                ->onError($this->handler)
+                ->view('MissingView');
+        }
+    };
+
+    $this->dispatcher
+        ->expects($this->once())
+        ->method('dispatch')
+        ->with($this->callback(function (NotificationFailed $event) use ($notifiable, $notification): bool {
+            return $event->channel === 'max'
+                && $event->notifiable === $notifiable
+                && $event->notification === $notification
+                && $event->data['to'] === []
+                && $event->data['request'] === [
+                    'query' => [],
+                    'body' => ['text' => 'Unexpected failure'],
+                ]
+                && $event->data['exception'] instanceof InvalidArgumentException;
+        }));
+
+    try {
+        $this->channel->send($notifiable, $notification);
+    } finally {
+        expect($capturedError)->toMatchArray([
+            'to' => [],
+            'request' => [
+                'query' => [],
+                'body' => ['text' => 'Unexpected failure'],
+            ],
+        ]);
+        expect($capturedError['exception'])->toBeInstanceOf(InvalidArgumentException::class);
+    }
+})->throws(InvalidArgumentException::class);
+
 it('returns null when notification does not define toMax', function () {
     $result = $this->channel->send(new TestNotifiable, new class extends Notification {});
 

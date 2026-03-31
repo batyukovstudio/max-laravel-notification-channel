@@ -9,6 +9,8 @@ use JsonSerializable;
 
 abstract class MaxBase implements JsonSerializable
 {
+    private static ?self $pendingExceptionTarget = null;
+
     public MaxClient $client;
 
     public ?string $token = null;
@@ -46,8 +48,22 @@ abstract class MaxBase implements JsonSerializable
         $this->exceptionHandler = $callback instanceof Closure
             ? $callback
             : Closure::fromCallable($callback);
+        self::$pendingExceptionTarget = $this;
 
         return $this;
+    }
+
+    public static function pullPendingExceptionTarget(): ?self
+    {
+        $target = self::$pendingExceptionTarget;
+        self::$pendingExceptionTarget = null;
+
+        return $target;
+    }
+
+    public static function forgetPendingExceptionTarget(): void
+    {
+        self::$pendingExceptionTarget = null;
     }
 
     public function sendWhen(bool|callable $condition): static

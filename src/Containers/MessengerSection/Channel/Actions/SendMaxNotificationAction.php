@@ -27,6 +27,8 @@ final class SendMaxNotificationAction
      */
     public function run(mixed $notifiable, Notification $notification): ?array
     {
+        MaxMessage::forgetPendingExceptionTarget();
+
         if (! method_exists($notification, 'toMax')) {
             return null;
         }
@@ -36,6 +38,7 @@ final class SendMaxNotificationAction
 
         try {
             $message = $notification->toMax($notifiable);
+            MaxMessage::forgetPendingExceptionTarget();
 
             if (is_string($message)) {
                 $message = MaxMessage::create($message);
@@ -61,14 +64,18 @@ final class SendMaxNotificationAction
 
             $response = $message->clientWithOverrides()->sendMessage($message);
         } catch (Throwable $exception) {
+            $preparedMessage = $message instanceof MaxMessage
+                ? $message
+                : MaxMessage::pullPendingExceptionTarget();
+
             $data = [
                 'to' => $recipient,
                 'exception' => $exception,
             ];
 
-            if ($message instanceof MaxMessage) {
-                $data['request'] = $message->toArray();
-                $message->exceptionHandler?->__invoke($data);
+            if ($preparedMessage instanceof MaxMessage) {
+                $data['request'] = $preparedMessage->toArray();
+                $preparedMessage->exceptionHandler?->__invoke($data);
             }
 
             $this->dispatcher->dispatch(
