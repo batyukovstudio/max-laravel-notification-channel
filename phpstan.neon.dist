@@ -1,0 +1,17 @@
+includes:
+    - phpstan-baseline.neon
+
+parameters:
+    level: max
+    paths:
+        - src
+    tmpDir: build/phpstan
+
+    checkMissingTypehints: true
+    checkExplicitMixed: true
+
+    inferPrivatePropertyTypeFromConstructor: true
+    treatPhpDocTypesAsCertain: true
+
+    universalObjectCratesClasses:
+        - Illuminate\Support\Collection

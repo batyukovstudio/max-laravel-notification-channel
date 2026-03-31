@@ -1,0 +1,9 @@
+vendor
+build
+.phpunit.cache
+composer.lock
+phpunit.xml
+phpstan.neon
+.idea/
+.codex
+.codex/

@@ -1,0 +1,52 @@
+name: Unit test coverage
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  coverage:
+    if: (github.repository == 'batyukovstudio/max-laravel-notification-channel') && !contains(github.event.head_commit.message, 'skip ci')
+    runs-on: ubuntu-latest
+
+    env:
+      COMPOSER_CACHE_DIR: ~/.composer/cache
+      LARAVEL_VERSION: '12.*'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          tools: composer:v2
+          coverage: pcov
+          extensions: mbstring, curl, fileinfo
+          ini-values: memory_limit=-1
+
+      - name: Cache Composer
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.COMPOSER_CACHE_DIR }}
+          key: composer-${{ runner.os }}-coverage-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
+            composer-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: |
+          composer require laravel/framework:${{ env.LARAVEL_VERSION }} --no-interaction --no-update
+          composer update --prefer-dist --no-interaction --no-progress
+
+      - name: Execute tests with coverage
+        run: vendor/bin/pest --coverage-clover=build/pest.xml
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: build/pest.xml
+          verbose: true
